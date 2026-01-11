@@ -24,6 +24,7 @@ public class VisionIOPhotonVision implements VisionIO {
     private final PhotonPoseEstimator poseEstimator;
     private PhotonPipelineResult result = new PhotonPipelineResult();
     private Pose3d latestPose = new Pose3d();
+    private Pose2d currentPose;
     public VisionIOPhotonVision(String name, Transform3d transform) {
         camera = new PhotonCamera(name);
         poseEstimator = new PhotonPoseEstimator(VisionConstants.PhysicalConstants.fieldLayout, VisionConstants.Strategies.primary, transform);
@@ -37,6 +38,7 @@ public class VisionIOPhotonVision implements VisionIO {
     @Override
     public void updatePose(Pose2d robotPose) {
         poseEstimator.addHeadingData(Timer.getFPGATimestamp(), robotPose.getRotation());
+        currentPose = robotPose;
     }
     
     @Override
@@ -44,11 +46,12 @@ public class VisionIOPhotonVision implements VisionIO {
         List<PhotonPipelineResult> results = camera.getAllUnreadResults();
         if (results.size() > 0) {
             result = results.get(0);
+            inputs.type = result.getMultiTagResult().isPresent() ? ObservationType.PhotonMultiTag : (VisionConstants.Strategies.secondary == PoseStrategy.PNP_DISTANCE_TRIG_SOLVE ? ObservationType.PhotonTrig : ObservationType.PhotonPnP);
             poseEstimator.update(result).ifPresent((poseEstimated) -> {
                 if (FieldConstants.inFieldBounds(poseEstimated.estimatedPose.toPose2d()) && MathUtil.applyDeadband(poseEstimated.estimatedPose.getZ(),0.1) == 0.0) {
                     latestPose = poseEstimated.estimatedPose;
                     inputs.estimatedPose = poseEstimated.estimatedPose;
-                    inputs.pose = poseEstimated.estimatedPose.toPose2d();
+                    inputs.pose = inputs.type == ObservationType.PhotonMultiTag ? poseEstimated.estimatedPose.toPose2d() : new Pose2d(poseEstimated.estimatedPose.toPose2d().getTranslation(), currentPose.getRotation());
                     inputs.tagCount = poseEstimated.targetsUsed.size();
                     Pose2d[] tagPoses = new Pose2d[inputs.tagCount];
                     for (int i=0; i<inputs.tagCount; i++) {
@@ -61,7 +64,6 @@ public class VisionIOPhotonVision implements VisionIO {
                     inputs.timestamp = poseEstimated.timestampSeconds;
                 }
             });
-            inputs.type = result.getMultiTagResult().isPresent() ? ObservationType.PhotonMultiTag : (VisionConstants.Strategies.secondary == PoseStrategy.PNP_DISTANCE_TRIG_SOLVE ? ObservationType.PhotonTrig : ObservationType.PhotonPnP);
             inputs.averageDistance = getAverageDist(result);
         }
     }

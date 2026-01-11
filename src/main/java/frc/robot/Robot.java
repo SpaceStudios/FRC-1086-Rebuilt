@@ -16,10 +16,19 @@ package frc.robot;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants.DriveMotorArrangement;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants.SteerMotorArrangement;
+
+import edu.wpi.first.apriltag.AprilTagFieldLayout;
+import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.commands.AutoRoutines;
 import frc.robot.generated.TunerConstants;
+import frc.robot.util.FieldConstants;
+
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.nio.file.Path;
 
 import org.ironmaple.simulation.SimulatedArena;
 import org.littletonrobotics.junction.LogFileUtil;
@@ -100,6 +109,18 @@ public class Robot extends LoggedRobot {
       }
     }
 
+    try {
+        String path = "/home/lvuser/deploy/fields/FRC-2026-Rebuilt.json";
+        File file = Path.of(path).toFile();
+        Logger.recordOutput("/Vision/File Exists", file.canRead());
+        FieldConstants.layout = new AprilTagFieldLayout(path);
+    } catch (IOException e) {
+        e.printStackTrace();
+        System.out.println("Failed to load custom field defaulting to WPILib default");
+        if (FieldConstants.layout == null) {
+          FieldConstants.layout = AprilTagFieldLayout.loadField(AprilTagFields.kDefaultField);
+        }
+    }
     // Instantiate our RobotContainer. This will perform all our button bindings,
     // and put our autonomous chooser on the dashboard.
     robotContainer = new RobotContainer();

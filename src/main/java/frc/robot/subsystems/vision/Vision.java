@@ -11,6 +11,7 @@ import org.littletonrobotics.junction.Logger;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.wpilibj.Timer;
@@ -25,6 +26,7 @@ public class Vision extends SubsystemBase {
   VisionConsumer consumer;
   Supplier<Pose2d> poseSupplier;
   Pose2d[] poses;
+  Pose3d[] tagPoses;
   VisionInputsAutoLogged[] inputs;
   public Vision(VisionConsumer consumer, Supplier<Pose2d> poseSupplier,VisionIO... cameras) {
     this.cameras = cameras;
@@ -35,6 +37,11 @@ public class Vision extends SubsystemBase {
     for (int i=0;i<inputs.length;i++) {
       inputs[i] = new VisionInputsAutoLogged();
     }
+    tagPoses = new Pose3d[FieldConstants.layout.getTags().size()];
+    for (int i=0;i<tagPoses.length; i++) {
+      tagPoses[i] = FieldConstants.layout.getTags().get(i).pose;
+    }
+    Logger.recordOutput("Vision/Tags", tagPoses);
   }
 
   @Override
