@@ -19,9 +19,11 @@ import com.ctre.phoenix6.swerve.SwerveModuleConstants.SteerMotorArrangement;
 
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
+import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.commands.AutoRoutines;
+import frc.robot.commands.DriveCommands;
 import frc.robot.generated.TunerConstants;
 import frc.robot.util.FieldConstants;
 
@@ -110,9 +112,7 @@ public class Robot extends LoggedRobot {
     }
 
     try {
-        String path = "/home/lvuser/deploy/fields/FRC-2026-Rebuilt.json";
-        File file = Path.of(path).toFile();
-        Logger.recordOutput("/Vision/File Exists", file.canRead());
+        String path = Filesystem.getDeployDirectory()+"/fields/FRC-2026-Rebuilt.json";
         FieldConstants.layout = new AprilTagFieldLayout(path);
     } catch (IOException e) {
         e.printStackTrace();
@@ -130,6 +130,7 @@ public class Robot extends LoggedRobot {
   @Override
   public void robotPeriodic() {
     AutoRoutines.periodic();
+    robotContainer.periodic();
     // Optionally switch the thread to high priority to improve loop
     // timing (see the template project documentation for details)
     // Threads.setCurrentThreadPriority(true, 99);
